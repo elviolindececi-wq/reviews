@@ -11,6 +11,7 @@ const countEl = $("#countReviews");
 const listEl = $("#list");
 const form = $("#reviewForm");
 const submitBtn = $("#submitBtn");
+const refreshBtn = $("#refreshBtn");
 
 const starPicker = $("#starPicker");
 const starsHidden = $("#stars");
@@ -20,26 +21,53 @@ const nps = $("#nps");
 const npsVal = $("#npsVal");
 
 let picked = 0;
+let hover = 0;
 
-// ---------- UI: estrellas clickeables ----------
+// ---------- UI helpers ----------
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function clamp(n, a, b){
+  return Math.max(a, Math.min(b, n));
+}
+
 function renderPickerUI(value){
   const btns = [...starPicker.querySelectorAll(".starBtn")];
   btns.forEach(b => {
     const v = Number(b.dataset.value);
-    b.classList.toggle("on", v <= value);
-    b.classList.toggle("fill", v <= value);
+    b.classList.toggle("on", v <= value); // ✅ rellena casillas con CSS .on
   });
   pickedStars.textContent = `Elegiste ${value}/5`;
 }
 
+// ---------- UI: estrellas ----------
 starPicker.addEventListener("click", (e) => {
   const btn = e.target.closest(".starBtn");
   if (!btn) return;
+
   picked = Number(btn.dataset.value) || 0;
   starsHidden.value = String(picked);
   renderPickerUI(picked);
 });
 
+// preview premium (hover)
+starPicker.addEventListener("mouseover", (e) => {
+  const btn = e.target.closest(".starBtn");
+  if (!btn) return;
+  hover = Number(btn.dataset.value) || 0;
+  renderPickerUI(hover);
+});
+starPicker.addEventListener("mouseleave", () => {
+  renderPickerUI(picked);
+});
+
+// init estrellas
 renderPickerUI(0);
 
 // ---------- UI: NPS ----------
@@ -47,25 +75,47 @@ nps.addEventListener("input", () => {
   npsVal.textContent = nps.value;
 });
 
+// ---------- Loading state ----------
+function renderLoading(){
+  listEl.innerHTML = `
+    <div class="skeleton">
+      <div class="sk-line"></div>
+      <div class="sk-line"></div>
+      <div class="sk-line short"></div>
+    </div>
+    <div class="skeleton">
+      <div class="sk-line"></div>
+      <div class="sk-line"></div>
+      <div class="sk-line short"></div>
+    </div>
+  `;
+}
+
 // ---------- Fetch summary + list ----------
 async function load(){
-  const res = await fetch(`${API_URL}?mode=list&approved=1&limit=50`, { method:"GET" });
-  const json = await res.json();
+  renderLoading();
 
-  if (!json.ok) {
-    listEl.innerHTML = `<p class="muted">Error: ${escapeHtml(json.error || "No se pudo cargar")}</p>`;
+  let res, json;
+  try{
+    res = await fetch(`${API_URL}?mode=list&approved=1&limit=50`, { method:"GET" });
+    json = await res.json();
+  } catch (err){
+    listEl.innerHTML = `<p class="muted">No se pudo cargar (red). Probá de nuevo.</p>`;
+    return;
+  }
+
+  if (!json || !json.ok) {
+    listEl.innerHTML = `<p class="muted">Error: ${escapeHtml(json?.error || "No se pudo cargar")}</p>`;
     return;
   }
 
   const s = json.summary || { count:0, avg_stars:0, avg_nps:0, stars_display:"★★★★★ 0.0" };
 
-  // Visual tipo "★★★★★ 4.8"
   starsText.textContent = "★★★★★";
   avgStarsEl.textContent = Number(s.avg_stars || 0).toFixed(1);
   avgNpsEl.textContent = Number(s.avg_nps || 0).toFixed(1);
   countEl.textContent = String(s.count || 0);
 
-  // list
   const items = json.items || [];
   if (!items.length){
     listEl.innerHTML = `<p class="muted">Todavía no hay testimonios publicados.</p>`;
@@ -78,28 +128,17 @@ async function load(){
     const comment = (it.comment || "").trim();
 
     return `
-      <div class="item">
+      <article class="item">
         <div class="left">
           <h3>${escapeHtml(name)}</h3>
           <p>${escapeHtml(comment)}</p>
         </div>
-        <div class="right">${"★".repeat(stars)}${"☆".repeat(5 - stars)} ${stars}</div>
-      </div>
+        <div class="right" aria-label="${stars} de 5">
+          ${"★".repeat(stars)}${"☆".repeat(5 - stars)} <span class="score">${stars}</span>
+        </div>
+      </article>
     `;
   }).join("");
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function clamp(n, a, b){
-  return Math.max(a, Math.min(b, n));
 }
 
 // ---------- Submit ----------
@@ -144,8 +183,8 @@ form.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
 
+    const json = await res.json();
     if (!json.ok) throw new Error(json.error || "Error desconocido");
 
     // reset
@@ -155,9 +194,13 @@ form.addEventListener("submit", async (e) => {
     picked = 0;
     renderPickerUI(0);
 
+    // reset NPS a 8 (opcional)
+    nps.value = "8";
+    npsVal.textContent = "8";
+
     alert("¡Gracias! Tu reseña fue enviada ✅");
 
-    // recargar datos publicados (si approved=false, no aparecerá aún)
+    // recargar (no aparecerá si approved=false)
     await load();
   } catch(err){
     console.error(err);
@@ -168,6 +211,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+refreshBtn?.addEventListener("click", load);
 
 // init
 load();
