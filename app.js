@@ -21,9 +21,8 @@ const nps = $("#nps");
 const npsVal = $("#npsVal");
 
 let picked = 0;
-let hover = 0;
 
-// ---------- UI helpers ----------
+// ---------- helpers ----------
 function escapeHtml(str){
   return String(str)
     .replace(/&/g,"&amp;")
@@ -41,76 +40,65 @@ function renderPickerUI(value){
   const btns = [...starPicker.querySelectorAll(".starBtn")];
   btns.forEach(b => {
     const v = Number(b.dataset.value);
-    b.classList.toggle("on", v <= value); // ✅ rellena casillas con CSS .on
+    b.classList.toggle("on", v <= value);
   });
   pickedStars.textContent = `Elegiste ${value}/5`;
 }
 
-// ---------- UI: estrellas ----------
+// ---------- estrellas: click + hover preview ----------
 starPicker.addEventListener("click", (e) => {
   const btn = e.target.closest(".starBtn");
   if (!btn) return;
-
   picked = Number(btn.dataset.value) || 0;
   starsHidden.value = String(picked);
   renderPickerUI(picked);
 });
 
-// preview premium (hover)
 starPicker.addEventListener("mouseover", (e) => {
   const btn = e.target.closest(".starBtn");
   if (!btn) return;
-  hover = Number(btn.dataset.value) || 0;
+  const hover = Number(btn.dataset.value) || 0;
   renderPickerUI(hover);
 });
+
 starPicker.addEventListener("mouseleave", () => {
   renderPickerUI(picked);
 });
 
-// init estrellas
 renderPickerUI(0);
 
-// ---------- UI: NPS ----------
+// ---------- NPS ----------
 nps.addEventListener("input", () => {
   npsVal.textContent = nps.value;
 });
 
-// ---------- Loading state ----------
+// ---------- loading skeleton ----------
 function renderLoading(){
   listEl.innerHTML = `
-    <div class="skeleton">
-      <div class="sk-line"></div>
-      <div class="sk-line"></div>
-      <div class="sk-line short"></div>
-    </div>
-    <div class="skeleton">
-      <div class="sk-line"></div>
-      <div class="sk-line"></div>
-      <div class="sk-line short"></div>
-    </div>
+    <div class="skItem"><div class="skLine w60"></div><div class="skLine"></div><div class="skLine w40"></div></div>
+    <div class="skItem"><div class="skLine w55"></div><div class="skLine"></div><div class="skLine w35"></div></div>
   `;
 }
 
-// ---------- Fetch summary + list ----------
+// ---------- load list ----------
 async function load(){
   renderLoading();
 
-  let res, json;
+  let json;
   try{
-    res = await fetch(`${API_URL}?mode=list&approved=1&limit=50`, { method:"GET" });
+    const res = await fetch(`${API_URL}?mode=list&approved=1&limit=50`, { method:"GET" });
     json = await res.json();
-  } catch (err){
-    listEl.innerHTML = `<p class="muted">No se pudo cargar (red). Probá de nuevo.</p>`;
+  } catch {
+    listEl.innerHTML = `<p class="muted">No se pudo cargar. Probá de nuevo.</p>`;
     return;
   }
 
-  if (!json || !json.ok) {
+  if (!json?.ok){
     listEl.innerHTML = `<p class="muted">Error: ${escapeHtml(json?.error || "No se pudo cargar")}</p>`;
     return;
   }
 
-  const s = json.summary || { count:0, avg_stars:0, avg_nps:0, stars_display:"★★★★★ 0.0" };
-
+  const s = json.summary || { count:0, avg_stars:0, avg_nps:0 };
   starsText.textContent = "★★★★★";
   avgStarsEl.textContent = Number(s.avg_stars || 0).toFixed(1);
   avgNpsEl.textContent = Number(s.avg_nps || 0).toFixed(1);
@@ -129,19 +117,22 @@ async function load(){
 
     return `
       <article class="item">
-        <div class="left">
-          <h3>${escapeHtml(name)}</h3>
-          <p>${escapeHtml(comment)}</p>
-        </div>
-        <div class="right" aria-label="${stars} de 5">
-          ${"★".repeat(stars)}${"☆".repeat(5 - stars)} <span class="score">${stars}</span>
+        <div class="itemLeft">
+          <div class="itemTop">
+            <h3 class="itemName">${escapeHtml(name)}</h3>
+            <div class="itemStars" aria-label="${stars} de 5">
+              ${"★".repeat(stars)}${"☆".repeat(5 - stars)}
+              <span class="itemScore">${stars}</span>
+            </div>
+          </div>
+          <p class="itemComment">${escapeHtml(comment)}</p>
         </div>
       </article>
     `;
   }).join("");
 }
 
-// ---------- Submit ----------
+// ---------- submit ----------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -173,7 +164,7 @@ form.addEventListener("submit", async (e) => {
     stars,
     nps: npsValNum,
     comment,
-    approved: false, // modo moderación
+    approved: false, // moderación
     user_agent: navigator.userAgent
   };
 
@@ -183,24 +174,19 @@ form.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
-
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || "Error desconocido");
 
-    // reset
     $("#name").value = "";
     $("#comment").value = "";
     starsHidden.value = "0";
     picked = 0;
     renderPickerUI(0);
 
-    // reset NPS a 8 (opcional)
     nps.value = "8";
     npsVal.textContent = "8";
 
     alert("¡Gracias! Tu reseña fue enviada ✅");
-
-    // recargar (no aparecerá si approved=false)
     await load();
   } catch(err){
     console.error(err);
