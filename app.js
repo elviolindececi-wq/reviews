@@ -1,128 +1,95 @@
-// ======================
-// CONFIG
-// ======================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby24Z_JSq9WoWOppwy8RyqmMAkPTdwWlcOpL1XLccm0H_jVd25YOQr8wovnyfuPQqxk/exec";
-
-// Page tag para separar reseñas por landing (opcional)
-// Ej: si la web es /reviews/?page=landing-ceci => guarda y lee esas reseñas
-const qs = new URLSearchParams(location.search);
-const PAGE = qs.get("page") || "default";
+// app.js — Reviews (GitHub Pages) + Google Apps Script
+const API_URL = "https://script.google.com/macros/s/AKfycby24Z_JSq9WoWOppwy8RyqmMAkPTdwWlcOpL1XLccm0H_jVd25YOQr8wovnyfuPQqxk/exec";
 
 const $ = (s) => document.querySelector(s);
 
-function uuid() {
-  try { if (crypto?.randomUUID) return crypto.randomUUID(); } catch {}
-  return "lead_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-}
+const starsText = $("#starsText");
+const avgStarsEl = $("#avgStars");
+const avgNpsEl = $("#avgNps");
+const countEl = $("#countReviews");
 
-function starsText(n) {
-  const full = "★★★★★";
-  const empty = "☆☆☆☆☆";
-  const k = Math.max(0, Math.min(5, Number(n) || 0));
-  return full.slice(0, k) + empty.slice(0, 5 - k);
-}
+const listEl = $("#list");
+const form = $("#reviewForm");
+const submitBtn = $("#submitBtn");
 
-// ======================
-// STATE
-// ======================
-let selectedStars = 0;
-const lead_id = uuid();
+const starPicker = $("#starPicker");
+const starsHidden = $("#stars");
+const pickedStars = $("#pickedStars");
 
-// ======================
-// UI init
-// ======================
-function initStarsPicker() {
-  const wrap = $("#starsPick");
-  wrap.innerHTML = "";
+const nps = $("#nps");
+const npsVal = $("#npsVal");
 
-  for (let i = 1; i <= 5; i++) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "starBtn";
-    b.textContent = "★";
-    b.setAttribute("aria-label", `${i} estrellas`);
-    b.addEventListener("click", () => {
-      selectedStars = i;
-      renderStarsPicker();
-      $("#starsHint").textContent = `Elegiste ${i}/5`;
-    });
-    wrap.appendChild(b);
-  }
+let picked = 0;
 
-  renderStarsPicker();
-}
-
-function renderStarsPicker() {
-  const btns = Array.from(document.querySelectorAll(".starBtn"));
-  btns.forEach((b, idx) => {
-    const i = idx + 1;
-    b.classList.toggle("on", i <= selectedStars);
-    b.style.opacity = (i <= selectedStars) ? "1" : "0.35";
+// ---------- UI: estrellas clickeables ----------
+function renderPickerUI(value){
+  const btns = [...starPicker.querySelectorAll(".starBtn")];
+  btns.forEach(b => {
+    const v = Number(b.dataset.value);
+    b.classList.toggle("on", v <= value);
+    b.classList.toggle("fill", v <= value);
   });
+  pickedStars.textContent = `Elegiste ${value}/5`;
 }
 
-// NPS bubble
-function initNps() {
-  const r = $("#nps");
-  const b = $("#npsBubble");
-  b.textContent = r.value;
-  r.addEventListener("input", () => (b.textContent = r.value));
-}
+starPicker.addEventListener("click", (e) => {
+  const btn = e.target.closest(".starBtn");
+  if (!btn) return;
+  picked = Number(btn.dataset.value) || 0;
+  starsHidden.value = String(picked);
+  renderPickerUI(picked);
+});
 
-// ======================
-// LOAD summary + items
-// ======================
-async function load() {
-  const url = `${SCRIPT_URL}?page=${encodeURIComponent(PAGE)}`;
-  const res = await fetch(url, { method: "GET" });
-  const data = await res.json();
+renderPickerUI(0);
 
-  if (!data.ok) {
-    $("#countDisplay").textContent = "Error cargando reseñas";
-    $("#starsDisplay").textContent = "★★★★★ 0.0";
-    $("#npsAvg").textContent = "0.0";
-    $("#listEmpty").textContent = data.error || "Error";
+// ---------- UI: NPS ----------
+nps.addEventListener("input", () => {
+  npsVal.textContent = nps.value;
+});
+
+// ---------- Fetch summary + list ----------
+async function load(){
+  const res = await fetch(`${API_URL}?mode=list&approved=1&limit=50`, { method:"GET" });
+  const json = await res.json();
+
+  if (!json.ok) {
+    listEl.innerHTML = `<p class="muted">Error: ${escapeHtml(json.error || "No se pudo cargar")}</p>`;
     return;
   }
 
-  const summary = data.summary || { count: 0, avg_stars: 0, avg_nps: 0, stars_display: "★★★★★ 0.0" };
-  $("#starsDisplay").textContent = summary.stars_display || "★★★★★ 0.0";
-  $("#countDisplay").textContent = `${summary.count || 0} reseñas`;
-  $("#npsAvg").textContent = (summary.avg_nps ?? 0).toFixed(1);
+  const s = json.summary || { count:0, avg_stars:0, avg_nps:0, stars_display:"★★★★★ 0.0" };
 
-  renderList(data.items || []);
-}
+  // Visual tipo "★★★★★ 4.8"
+  starsText.textContent = "★★★★★";
+  avgStarsEl.textContent = Number(s.avg_stars || 0).toFixed(1);
+  avgNpsEl.textContent = Number(s.avg_nps || 0).toFixed(1);
+  countEl.textContent = String(s.count || 0);
 
-function renderList(items) {
-  const list = $("#list");
-  const empty = $("#listEmpty");
-
-  list.innerHTML = "";
-  if (!items.length) {
-    empty.textContent = "Aún no hay testimonios aprobados para mostrar.";
+  // list
+  const items = json.items || [];
+  if (!items.length){
+    listEl.innerHTML = `<p class="muted">Todavía no hay testimonios publicados.</p>`;
     return;
   }
-  empty.textContent = "";
 
-  items.forEach((x) => {
-    const div = document.createElement("div");
-    div.className = "item";
+  listEl.innerHTML = items.map(it => {
+    const name = (it.name || "Anónimo").trim() || "Anónimo";
+    const stars = clamp(Number(it.stars || 0), 0, 5);
+    const comment = (it.comment || "").trim();
 
-    const name = (x.name || "").trim() || "Anónimo";
-    const st = starsText(x.stars);
-
-    div.innerHTML = `
-      <div class="itemTop">
-        <div class="itemName">${escapeHtml(name)}</div>
-        <div class="itemStars">${escapeHtml(st)} ${(Number(x.stars)||0).toFixed(1).replace(".0","")}</div>
+    return `
+      <div class="item">
+        <div class="left">
+          <h3>${escapeHtml(name)}</h3>
+          <p>${escapeHtml(comment)}</p>
+        </div>
+        <div class="right">${"★".repeat(stars)}${"☆".repeat(5 - stars)} ${stars}</div>
       </div>
-      <div class="itemComment">${escapeHtml(x.comment || "")}</div>
     `;
-    list.appendChild(div);
-  });
+  }).join("");
 }
 
-function escapeHtml(str) {
+function escapeHtml(str){
   return String(str)
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
@@ -131,67 +98,75 @@ function escapeHtml(str) {
     .replace(/'/g,"&#039;");
 }
 
-// ======================
-// SUBMIT
-// ======================
-async function submitReview(e) {
+function clamp(n, a, b){
+  return Math.max(a, Math.min(b, n));
+}
+
+// ---------- Submit ----------
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const status = $("#status");
-  const btn = $("#submitBtn");
+  const name = ($("#name").value || "").trim();
+  const stars = Number(starsHidden.value || 0);
+  const npsValNum = Number(nps.value || 0);
+  const comment = ($("#comment").value || "").trim();
+
+  if (!(stars >= 1 && stars <= 5)){
+    alert("Elegí una calificación de 1 a 5 estrellas.");
+    return;
+  }
+  if (!(npsValNum >= 0 && npsValNum <= 10)){
+    alert("NPS inválido (0 a 10).");
+    return;
+  }
+  if (!comment){
+    alert("Escribí un comentario.");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Enviando…";
 
   const payload = {
-    page: PAGE,
-    lead_id,
-    name: ($("#name").value || "").trim(),
-    stars: selectedStars,
-    nps: Number($("#nps").value || 0),
-    comment: ($("#comment").value || "").trim()
+    page: location.pathname,
+    lead_id: `rev_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`,
+    name,
+    stars,
+    nps: npsValNum,
+    comment,
+    approved: false, // modo moderación
+    user_agent: navigator.userAgent
   };
 
-  if (!payload.stars || payload.stars < 1 || payload.stars > 5) {
-    status.textContent = "Elegí una calificación de 1 a 5 estrellas.";
-    return;
-  }
-  if (!payload.comment) {
-    status.textContent = "Escribí un comentario (obligatorio).";
-    return;
-  }
-
-  status.textContent = "Enviando…";
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(SCRIPT_URL, {
+  try{
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
+    const json = await res.json();
 
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "Error");
+    if (!json.ok) throw new Error(json.error || "Error desconocido");
 
-    status.textContent = "¡Gracias! Tu reseña quedará visible cuando sea aprobada ✅";
-    $("#comment").value = "";
+    // reset
     $("#name").value = "";
-    selectedStars = 0;
-    renderStarsPicker();
+    $("#comment").value = "";
+    starsHidden.value = "0";
+    picked = 0;
+    renderPickerUI(0);
 
-    // Recargar lista/promedio (solo mostrará aprobadas)
+    alert("¡Gracias! Tu reseña fue enviada ✅");
+
+    // recargar datos publicados (si approved=false, no aparecerá aún)
     await load();
-
-  } catch (err) {
-    status.textContent = "Error enviando. Probá de nuevo.";
+  } catch(err){
     console.error(err);
-  } finally {
-    btn.disabled = false;
+    alert("No se pudo enviar. Probá de nuevo.");
+  } finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Enviar reseña";
   }
-}
+});
 
-// ======================
-// INIT
-// ======================
-initStarsPicker();
-initNps();
-$("#reviewForm").addEventListener("submit", submitReview);
+// init
 load();
