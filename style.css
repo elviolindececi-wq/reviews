@@ -1,6 +1,5 @@
 :root{
-  --bg0: #07080b;
-  --bg1: #0b0c10;
+  --bgBase: #0e1a28ff;
 
   --cardA: rgba(255,255,255,.06);
   --cardB: rgba(255,255,255,.03);
@@ -9,7 +8,7 @@
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.62);
 
-  /* Dorado “champagne” (similar a tu referencia) */
+  /* dorado champagne */
   --gold: #ddb96d;
   --gold2: #c9a35c;
 
@@ -27,22 +26,22 @@ body{
   margin: 0;
   color: var(--text);
   background:
-    radial-gradient(1200px 900px at 25% 0%, rgba(221,185,109,.18), transparent 55%),
-    radial-gradient(900px 700px at 75% 10%, rgba(255,255,255,.07), transparent 60%),
+    radial-gradient(1200px 900px at 25% 0%, rgba(221,185,109,.16), transparent 55%),
+    radial-gradient(900px 700px at 80% 10%, rgba(255,255,255,.06), transparent 60%),
     radial-gradient(1100px 800px at 50% 110%, rgba(221,185,109,.10), transparent 55%),
-    linear-gradient(180deg, var(--bg0), var(--bg1));
+    linear-gradient(180deg, var(--bgBase), var(--bgBase));
   min-height: 100vh;
 }
 
-/* viñeta suave tipo screenshot */
+/* viñeta suave */
 body:before{
   content:"";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(1000px 700px at 50% 20%, transparent 35%, rgba(0,0,0,.55) 70%),
-    radial-gradient(1000px 700px at 50% 90%, transparent 35%, rgba(0,0,0,.60) 75%);
+    radial-gradient(1000px 700px at 50% 20%, transparent 35%, rgba(0,0,0,.45) 70%),
+    radial-gradient(1000px 700px at 50% 90%, transparent 35%, rgba(0,0,0,.50) 75%);
   opacity: .75;
 }
 
@@ -62,8 +61,8 @@ body:before{
 }
 
 .logo{
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 14px;
   display:flex;
   align-items:center;
@@ -76,12 +75,16 @@ body:before{
 .brandName{
   font-weight: 900;
   letter-spacing: -0.02em;
+  font-size: 16px;
+  color: rgba(255,255,255,.90);
 }
 
 .brandSub{
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--muted);
+  margin-top: 4px;
+  font-size: clamp(26px, 3.6vw, 36px); /* ✅ más grande */
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,.96);
 }
 
 /* Card premium */
@@ -102,9 +105,9 @@ body:before{
   inset:-1px;
   pointer-events:none;
   background:
-    radial-gradient(900px 180px at 20% 0%, rgba(221,185,109,.12), transparent 55%),
-    radial-gradient(900px 180px at 80% 0%, rgba(255,255,255,.06), transparent 55%);
-  opacity: .9;
+    radial-gradient(900px 180px at 20% 0%, rgba(221,185,109,.10), transparent 55%),
+    radial-gradient(900px 180px at 80% 0%, rgba(255,255,255,.05), transparent 55%);
+  opacity: .95;
 }
 
 .cardTitleRow{
@@ -119,27 +122,9 @@ body:before{
 
 h2{
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 900;
   letter-spacing: -0.01em;
-}
-
-.pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(221,185,109,.26);
-  background: rgba(221,185,109,.10);
-  color: rgba(255,255,255,.86);
-  font-weight: 800;
-  font-size: 12px;
-}
-
-.pillSoft{
-  border-color: rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
 }
 
 .muted{ color: var(--muted); }
@@ -187,12 +172,11 @@ h2{
 
 /* Form */
 .form{ position: relative; z-index: 1; }
-
 .field{ margin-top: 12px; }
 
 .label{
   display:block;
-  font-weight: 750;
+  font-weight: 800;
   color: rgba(255,255,255,.86);
   font-size: 13px;
   letter-spacing: -0.01em;
@@ -212,7 +196,7 @@ input, textarea{
   margin-top: 8px;
   border-radius: var(--radius2);
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(10,11,14,.55);
+  background: rgba(8, 12, 18, .40);
   color: var(--text);
   outline: none;
   transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease, background .18s ease;
@@ -241,7 +225,7 @@ input:focus, textarea:focus{
   padding: 12px 14px;
   border: 1px solid rgba(221,185,109,.22);
   border-radius: 14px;
-  font-weight: 900;
+  font-weight: 950;
   letter-spacing: .01em;
   cursor:pointer;
   color: #0b0c10;
@@ -269,7 +253,27 @@ input:focus, textarea:focus{
   border-color: rgba(255,255,255,.22);
 }
 
-/* ⭐ Star “casillas” premium (como la referencia) */
+/* Pills (para el NPS bubble) */
+.pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(221,185,109,.26);
+  background: rgba(221,185,109,.10);
+  color: rgba(255,255,255,.86);
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.pillSoft{
+  border-color: rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+}
+
+/* ⭐ Stars “casillas” */
 .starPicker{
   display:flex;
   gap: 10px;
