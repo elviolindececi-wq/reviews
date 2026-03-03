@@ -3,12 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reseñas</title>
-  <link rel="stylesheet" href="style.css?v=1" />
+  <title>Reseñas — El violín de Ceci</title>
+
+  <!-- subí el versionado cuando actualices para evitar caché -->
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <main class="wrap">
     <header class="top">
+      <div class="brand">
+        <div class="badge">El violín de Ceci</div>
+      </div>
       <h1>Reseñas</h1>
       <p class="sub">Dejá tu opinión en 30 segundos.</p>
     </header>
@@ -17,11 +22,12 @@
       <div class="summary">
         <div class="summary-left">
           <div class="stars-line">
-            <span id="starsText" class="starsText">★★★★★</span>
+            <span id="starsText" class="starsText" aria-hidden="true">★★★★★</span>
             <span id="avgStars" class="avg">0.0</span>
           </div>
           <div class="muted"><span id="countReviews">0</span> reseñas</div>
         </div>
+
         <div class="summary-right">
           <div class="muted">NPS promedio</div>
           <div id="avgNps" class="nps">0.0</div>
@@ -32,7 +38,7 @@
     <section class="card">
       <h2>Dejá tu reseña</h2>
 
-      <form id="reviewForm" class="form">
+      <form id="reviewForm" class="form" autocomplete="off">
         <label>
           <span>Nombre (opcional)</span>
           <input id="name" type="text" placeholder="Tu nombre" />
@@ -44,7 +50,6 @@
             <span class="muted" id="pickedStars">Elegiste 0/5</span>
           </div>
 
-          <!-- ⭐ acá están las estrellas clickeables -->
           <div class="starPicker" id="starPicker" aria-label="Seleccionar estrellas">
             <button type="button" class="starBtn" data-value="1" aria-label="1 estrella">★</button>
             <button type="button" class="starBtn" data-value="2" aria-label="2 estrellas">★</button>
@@ -79,12 +84,19 @@
     </section>
 
     <section class="card">
-      <h2>Testimonios</h2>
+      <div class="rowTitle">
+        <h2>Testimonios</h2>
+        <button id="refreshBtn" class="btnGhost" type="button" aria-label="Actualizar">Actualizar</button>
+      </div>
       <div id="list" class="list"></div>
     </section>
+
+    <footer class="footer muted">
+      Hecho con ♥ — Reseñas
+    </footer>
   </main>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
 
