@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reseñas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="wrap">
+    <header class="head">
+      <h1>Reseñas</h1>
+      <p class="muted">Dejá tu opinión en 30 segundos.</p>
+    </header>
+
+    <!-- PROMEDIO -->
+    <section class="card">
+      <div class="summary">
+        <div>
+          <div class="starsLine" id="starsDisplay">★★★★★ 0.0</div>
+          <div class="muted" id="countDisplay">0 reseñas</div>
+        </div>
+        <div class="npsBox">
+          <div class="npsLabel">NPS promedio</div>
+          <div class="npsValue" id="npsAvg">0.0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORM -->
+    <section class="card">
+      <h2>Dejá tu reseña</h2>
+
+      <form id="reviewForm">
+        <label>Nombre (opcional)</label>
+        <input id="name" type="text" maxlength="80" placeholder="Tu nombre" />
+
+        <label>Estrellas</label>
+        <div class="starsPick" id="starsPick" aria-label="Elegir estrellas">
+          <!-- se rellena por JS -->
+        </div>
+        <div class="muted small" id="starsHint">Seleccioná 1 a 5</div>
+
+        <label>NPS (0 a 10)</label>
+        <div class="npsRow">
+          <input id="nps" type="range" min="0" max="10" step="1" value="8" />
+          <div class="npsBubble" id="npsBubble">8</div>
+        </div>
+        <div class="muted small">0 = nada probable · 10 = muy probable</div>
+
+        <label>Comentario</label>
+        <textarea id="comment" rows="4" maxlength="2000" placeholder="Contanos cómo fue tu experiencia…"></textarea>
+
+        <button id="submitBtn" type="submit">Enviar reseña</button>
+        <div class="muted small" id="status"></div>
+      </form>
+    </section>
+
+    <!-- LISTA TESTIMONIOS -->
+    <section class="card">
+      <h2>Testimonios</h2>
+      <div id="list" class="list"></div>
+      <div class="muted small" id="listEmpty"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
