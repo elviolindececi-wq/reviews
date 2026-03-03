@@ -4,67 +4,86 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reseñas</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
-
   <main class="wrap">
-    <header class="head">
+    <header class="top">
       <h1>Reseñas</h1>
-      <p class="muted">Dejá tu opinión en 30 segundos.</p>
+      <p class="sub">Dejá tu opinión en 30 segundos.</p>
     </header>
 
-    <!-- PROMEDIO -->
     <section class="card">
       <div class="summary">
-        <div>
-          <div class="starsLine" id="starsDisplay">★★★★★ 0.0</div>
-          <div class="muted" id="countDisplay">0 reseñas</div>
+        <div class="summary-left">
+          <div class="stars-line">
+            <span id="starsText" class="starsText">★★★★★</span>
+            <span id="avgStars" class="avg">0.0</span>
+          </div>
+          <div class="muted"><span id="countReviews">0</span> reseñas</div>
         </div>
-        <div class="npsBox">
-          <div class="npsLabel">NPS promedio</div>
-          <div class="npsValue" id="npsAvg">0.0</div>
+        <div class="summary-right">
+          <div class="muted">NPS promedio</div>
+          <div id="avgNps" class="nps">0.0</div>
         </div>
       </div>
     </section>
 
-    <!-- FORM -->
     <section class="card">
       <h2>Dejá tu reseña</h2>
 
-      <form id="reviewForm">
-        <label>Nombre (opcional)</label>
-        <input id="name" type="text" maxlength="80" placeholder="Tu nombre" />
+      <form id="reviewForm" class="form">
+        <label>
+          <span>Nombre (opcional)</span>
+          <input id="name" type="text" placeholder="Tu nombre" />
+        </label>
 
-        <label>Estrellas</label>
-        <div class="starsPick" id="starsPick" aria-label="Elegir estrellas">
-          <!-- se rellena por JS -->
+        <div class="field">
+          <div class="labelRow">
+            <span>Estrellas</span>
+            <span class="muted" id="pickedStars">Elegiste 0/5</span>
+          </div>
+
+          <!-- ⭐ acá están las estrellas clickeables -->
+          <div class="starPicker" id="starPicker" aria-label="Seleccionar estrellas">
+            <button type="button" class="starBtn" data-value="1" aria-label="1 estrella">★</button>
+            <button type="button" class="starBtn" data-value="2" aria-label="2 estrellas">★</button>
+            <button type="button" class="starBtn" data-value="3" aria-label="3 estrellas">★</button>
+            <button type="button" class="starBtn" data-value="4" aria-label="4 estrellas">★</button>
+            <button type="button" class="starBtn" data-value="5" aria-label="5 estrellas">★</button>
+          </div>
+
+          <input type="hidden" id="stars" value="0" />
         </div>
-        <div class="muted small" id="starsHint">Seleccioná 1 a 5</div>
 
-        <label>NPS (0 a 10)</label>
-        <div class="npsRow">
+        <div class="field">
+          <div class="labelRow">
+            <span>NPS (0 a 10)</span>
+            <span class="pill" id="npsVal">8</span>
+          </div>
           <input id="nps" type="range" min="0" max="10" step="1" value="8" />
-          <div class="npsBubble" id="npsBubble">8</div>
+          <div class="muted">0 = nada probable · 10 = muy probable</div>
         </div>
-        <div class="muted small">0 = nada probable · 10 = muy probable</div>
 
-        <label>Comentario</label>
-        <textarea id="comment" rows="4" maxlength="2000" placeholder="Contanos cómo fue tu experiencia…"></textarea>
+        <label>
+          <span>Comentario</span>
+          <textarea id="comment" rows="4" placeholder="Contanos cómo fue tu experiencia..."></textarea>
+        </label>
 
-        <button id="submitBtn" type="submit">Enviar reseña</button>
-        <div class="muted small" id="status"></div>
+        <button id="submitBtn" class="btn" type="submit">Enviar reseña</button>
+
+        <p class="fineprint">
+          *Las reseñas pueden tardar en aparecer si están en modo moderación (approved=false).
+        </p>
       </form>
     </section>
 
-    <!-- LISTA TESTIMONIOS -->
     <section class="card">
       <h2>Testimonios</h2>
       <div id="list" class="list"></div>
-      <div class="muted small" id="listEmpty"></div>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>
