@@ -98,3 +98,4 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .itemName { font-weight: 700; }
 .itemStars { letter-spacing: 1px; }
 .itemComment { white-space: pre-wrap; }
+
